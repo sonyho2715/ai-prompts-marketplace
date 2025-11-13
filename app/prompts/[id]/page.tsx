@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth'
 import { CopyButton } from '@/components/CopyButton'
 import { Header } from '@/components/Header'
 import { PromptCard } from '@/components/PromptCard'
+import { PromptCustomizer } from '@/components/PromptCustomizer'
 
 interface PromptDetailPageProps {
   params: Promise<{
@@ -324,46 +325,15 @@ export default async function PromptDetailPage({ params }: PromptDetailPageProps
               </p>
             </div>
 
-            {/* Prompt Content */}
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-4">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                  </svg>
-                  Prompt Content
-                </h2>
-              </div>
-
-              {hasAccess ? (
-                <div className="p-8">
-                  <div className="relative">
-                    <div className="absolute top-4 right-4 flex gap-2 z-10">
-                      <CopyButton
-                        content={prompt.content}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-lg text-white font-medium shadow-lg hover:shadow-xl transition-all"
-                        iconClassName="w-4 h-4"
-                      />
-                      <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-300 font-medium shadow-sm hover:shadow-md transition-all">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Download
-                      </button>
-                      <button className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg text-slate-700 dark:text-slate-300 shadow-sm hover:shadow-md transition-all">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                        </svg>
-                      </button>
-                    </div>
-                    <pre className="bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 dark:from-slate-950 dark:via-blue-950 dark:to-purple-950 rounded-xl p-8 text-sm text-slate-100 dark:text-slate-200 overflow-x-auto border border-slate-700 dark:border-slate-800 font-mono leading-relaxed shadow-inner min-h-[300px]">
-                      {prompt.content}
-                    </pre>
-                  </div>
-                </div>
+            {/* Prompt Content with Customizer */}
+            {hasAccess ? (
+                <PromptCustomizer
+                  originalContent={prompt.content}
+                  promptTitle={prompt.title}
+                />
               ) : (
-                <div className="p-12">
-                  <div className="relative overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 dark:from-slate-800 dark:via-blue-950/50 dark:to-purple-950/50 rounded-2xl p-12 text-center border-2 border-dashed border-slate-300 dark:border-slate-700">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                  <div className="relative overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 dark:from-slate-800 dark:via-blue-950/50 dark:to-purple-950/50 rounded-2xl p-12 text-center border-2 border-dashed border-slate-300 dark:border-slate-700 m-8">
                     <div className="relative z-10">
                       <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
                         <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -416,8 +386,8 @@ export default async function PromptDetailPage({ params }: PromptDetailPageProps
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+              )
+            }
 
             {/* Usage Tips */}
             {hasAccess && (
