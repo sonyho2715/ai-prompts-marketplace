@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and purchases
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  purchases     Purchase[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Category model for organizing prompts
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  prompts     Prompt[]
+}
+
+// Prompt model - the main product
+model Prompt {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  content     String   @db.Text
+  categoryId  String
+  tags        String[] @default([])
+  aiModel     String[] @default([]) // e.g., ["ChatGPT", "Claude", "Midjourney"]
+  difficulty  String   @default("beginner") // beginner, intermediate, advanced
+  isFree      Boolean  @default(false)
+  isPopular   Boolean  @default(false)
+  tier        String   @default("pro") // free, starter, pro, complete
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  @@index([categoryId])
+  @@index([isFree])
+  @@index([tier])
+}
+
+// Pricing tiers
+model PricingTier {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String
+  price       Float
+  stripePriceId String?
+  promptCount Int
+  features    String[] @default([])
+  isPopular   Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  purchases   Purchase[]
+}
+
+// Purchase/Order model
+model Purchase {
+  id              String   @id @default(cuid())
+  userId          String
+  pricingTierId   String
+  stripeSessionId String?  @unique
+  stripePaymentId String?
+  amount          Float
+  status          String   @default("pending") // pending, completed, failed
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User         @relation(fields: [userId], references: [id])
+  pricingTier     PricingTier  @relation(fields: [pricingTierId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
