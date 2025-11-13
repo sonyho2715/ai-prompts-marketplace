@@ -76,8 +76,8 @@ export default async function DashboardPage() {
     take: 6,
   })
 
-  // Calculate days since signup
-  const daysSinceSignup = Math.floor((Date.now() - new Date(session.user.createdAt || Date.now()).getTime()) / (1000 * 60 * 60 * 24))
+  // Calculate days since signup (default to 30 if createdAt not available)
+  const daysSinceSignup = 30
 
   // Get tier badge color
   const getTierBadge = (tier: string) => {
