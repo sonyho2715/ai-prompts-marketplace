@@ -142,12 +142,25 @@ export function EnhancedPromptCard({ prompt }: EnhancedPromptCardProps) {
             </div>
           </div>
 
-          {/* Hover Overlay with Actions */}
+          {/* Hover Overlay with Actions - Better contrast with darker gradient from bottom */}
           <div
-            className={`absolute inset-0 bg-gradient-to-t from-blue-600/95 via-purple-600/90 to-transparent flex items-end justify-center pb-8 transition-opacity duration-300 ${
+            className={`absolute inset-0 flex flex-col justify-end pb-8 transition-opacity duration-300 ${
               isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`}
+            style={{
+              background: 'linear-gradient(to top, rgba(30, 41, 59, 0.97) 0%, rgba(30, 41, 59, 0.90) 40%, rgba(30, 41, 59, 0.6) 70%, transparent 100%)'
+            }}
           >
+            {/* Title in overlay with good contrast */}
+            <div className="px-6 mb-4">
+              <h3 className="text-xl font-bold text-white drop-shadow-lg mb-2 line-clamp-2">
+                {prompt.title}
+              </h3>
+              <p className="text-white/90 text-sm drop-shadow line-clamp-2">
+                {prompt.description}
+              </p>
+            </div>
+
             <div className="space-y-3 w-full px-6">
               <div className="flex items-center justify-center gap-3">
                 <div className="flex-1">
@@ -156,7 +169,7 @@ export function EnhancedPromptCard({ prompt }: EnhancedPromptCardProps) {
                       e.preventDefault()
                       // Link will handle navigation
                     }}
-                    className="w-full px-4 py-3 rounded-xl bg-white text-blue-600 font-semibold hover:bg-blue-50 transition-all shadow-lg flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-blue-50 transition-all shadow-lg flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -167,7 +180,7 @@ export function EnhancedPromptCard({ prompt }: EnhancedPromptCardProps) {
                 </div>
                 <CopyButton
                   text={prompt.content}
-                  className="px-4 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white border-2 border-white hover:bg-white hover:text-blue-600 transition-all shadow-lg"
+                  className="px-4 py-3 rounded-xl bg-white/20 backdrop-blur-sm text-white border-2 border-white/40 hover:bg-white hover:text-slate-900 transition-all shadow-lg"
                   iconClassName="w-5 h-5"
                 />
               </div>
