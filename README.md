@@ -1,184 +1,128 @@
-# AI Prompts Pro - Marketplace
+# 🤖 AI Prompts Marketplace
 
-A full-featured AI prompts marketplace built with Next.js, featuring 1,000+ curated prompts across 10 categories.
+A premium marketplace for 1,000+ high-quality AI prompts built with Next.js 16, Prisma, NextAuth, and Stripe.
 
-## Features
+![Next.js](https://img.shields.io/badge/Next.js-16.0-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
+![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-316192)
 
-- 🎯 **1,000+ AI Prompts** - Expertly crafted prompts for ChatGPT, Claude, Midjourney, DALL-E, and more
-- 📁 **10 Categories** - Marketing, Content Writing, Business, Programming, Design, Education, Data Analytics, Customer Support, SEO, and Personal Development
-- 🔐 **Authentication** - Secure user registration and login with NextAuth.js
-- 💳 **Stripe Integration** - Secure payment processing for prompt packages
-- 🎨 **Beautiful UI** - Modern, responsive design with dark mode support
-- 🔍 **Advanced Search** - Filter by category, tier, difficulty, and AI model
-- 📊 **User Dashboard** - Manage purchases and access your prompts
-- 🎁 **Tiered Pricing** - Free (20 prompts), Starter ($29, 200 prompts), Pro ($79, 500 prompts), Complete ($149, 1000 prompts)
+## ✨ Features
 
-## Tech Stack
+- **1000+ AI Prompts** across 10 categories (Marketing, Sales, Content Writing, Business Strategy, Programming, Design, Productivity, Customer Support, Career, Personal Growth)
+- **Modern UI/UX** with gradient design (blue → purple → pink) and glassmorphism effects
+- **Authentication** with NextAuth.js (Credentials + JWT)
+- **Payment Processing** with Stripe (4 pricing tiers)
+- **Advanced Filtering** by category, tier, AI model, difficulty
+- **Responsive Design** mobile-first approach
+- **Premium Features** locked content, purchase history, dashboard
 
-- **Framework:** Next.js 16 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **Database:** PostgreSQL with Prisma ORM
-- **Authentication:** NextAuth.js
-- **Payments:** Stripe
-- **Deployment:** Vercel (recommended)
+## 🚀 Tech Stack
 
-## Getting Started
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Database**: PostgreSQL (Railway)
+- **ORM**: Prisma
+- **Auth**: NextAuth.js
+- **Payments**: Stripe
+- **Styling**: Tailwind CSS
+- **Deployment**: Vercel
 
-### Prerequisites
+## 📦 Installation
 
-- Node.js 18+ installed
-- PostgreSQL database (or use Prisma local dev server)
-- Stripe account (for payments)
-
-### Installation
-
-1. **Clone the repository**
 ```bash
+# Clone the repository
+git clone https://github.com/sonyho2715/ai-prompts-marketplace.git
 cd ai-prompts-marketplace
-```
 
-2. **Install dependencies**
-```bash
+# Install dependencies
 npm install
-```
 
-3. **Set up environment variables**
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your credentials
 
-The `.env` file already has a local database URL configured. Update it with your Stripe keys:
-
-```bash
-# Database (already configured for local Prisma Postgres)
-DATABASE_URL="prisma+postgres://localhost:51213/..."
-
-# NextAuth (already configured)
-NEXTAUTH_SECRET="ai-prompts-marketplace-secret-key-change-in-production"
-NEXTAUTH_URL="http://localhost:3000"
-
-# Stripe - ADD YOUR KEYS HERE
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
-STRIPE_SECRET_KEY="sk_test_..."
-STRIPE_WEBHOOK_SECRET="whsec_..." # For production webhooks
-```
-
-**Get Stripe Keys:**
-- Sign up at https://stripe.com
-- Go to Developers → API keys
-- Copy your Publishable key and Secret key
-- For webhooks: Developers → Webhooks → Add endpoint → Use `/api/webhook/stripe`
-
-4. **Start the database**
-```bash
-npx prisma dev
-```
-
-5. **Run database migrations**
-```bash
+# Run migrations
 npx prisma migrate dev
-```
 
-6. **Seed the database**
-```bash
-npm run db:seed
-```
+# Seed database
+npx tsx prisma/seed.ts
 
-This will create:
-- 10 categories
-- 4 pricing tiers
-- 1,000 AI prompts
-
-7. **Start the development server**
-```bash
+# Start development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see your marketplace!
+## 🌐 Deployment
 
-## Project Structure
+### Railway Database
 
-```
-ai-prompts-marketplace/
-├── app/
-│   ├── api/
-│   │   ├── auth/           # NextAuth API routes
-│   │   ├── checkout/       # Stripe checkout
-│   │   └── webhook/        # Stripe webhooks
-│   ├── checkout/           # Checkout pages
-│   ├── dashboard/          # User dashboard
-│   ├── login/              # Auth pages
-│   ├── prompts/            # Browse prompts
-│   └── page.tsx            # Landing page
-├── components/             # React components
-├── lib/                    # Utilities
-│   ├── auth.ts            # NextAuth config
-│   └── prisma.ts          # Prisma client
-├── prisma/
-│   ├── schema.prisma      # Database schema
-│   └── seed.ts            # Database seeding
-└── types/                 # TypeScript types
+1. Create a new PostgreSQL database on [Railway](https://railway.app)
+2. Copy the `DATABASE_URL`
+3. Run deployment script:
+
+```bash
+export DATABASE_URL='your-railway-database-url'
+./deploy-to-railway.sh
 ```
 
-## Key Pages
+### Vercel
 
-- `/` - Landing page with pricing tiers
-- `/prompts` - Browse all prompts with filters
-- `/prompts/[id]` - Individual prompt details
-- `/login` - User authentication
-- `/checkout` - Purchase prompts
-- `/dashboard` - User dashboard with purchases
-
-## Database Schema
-
-- **User** - User accounts and authentication
-- **Category** - Prompt categories (Marketing, Design, etc.)
-- **Prompt** - Individual AI prompts
-- **PricingTier** - Pricing packages (Free, Starter, Pro, Complete)
-- **Purchase** - User purchases and access control
-
-## Deployment
-
-### Deploy to Vercel
-
-1. Push your code to GitHub
-2. Import to Vercel
-3. Add environment variables in Vercel dashboard
+1. Push code to GitHub
+2. Import project in [Vercel](https://vercel.com)
+3. Add environment variables
 4. Deploy!
 
-### Database Options
+## 🔑 Environment Variables
 
-- **Local Development:** Use Prisma local dev server (already configured)
-- **Production:** Use Railway, Supabase, or any PostgreSQL provider
-  - Update `DATABASE_URL` in Vercel environment variables
+```env
+# Database
+DATABASE_URL="postgresql://..."
 
-### Stripe Webhooks
+# NextAuth
+NEXTAUTH_URL="https://your-domain.vercel.app"
+NEXTAUTH_SECRET="generate-a-random-secret"
 
-For production, set up a webhook endpoint:
-1. Go to Stripe Dashboard → Developers → Webhooks
-2. Add endpoint: `https://yourdomain.com/api/webhook/stripe`
-3. Select event: `checkout.session.completed`
-4. Copy webhook secret to `STRIPE_WEBHOOK_SECRET` env variable
-
-## Customization
-
-### Add More Prompts
-
-Edit `prisma/seed.ts` and run:
-```bash
-npm run db:seed
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_..."
+STRIPE_SECRET_KEY="sk_..."
+STRIPE_WEBHOOK_SECRET="whsec_..."
 ```
 
-### Update Pricing
+## 📝 Test Account
 
-Modify pricing tiers in `prisma/seed.ts` or directly in the database.
+- **Email**: test@example.com
+- **Password**: password123
+- **Access**: Complete tier (all 1000 prompts)
 
-### Change Categories
+## 🎨 Design Features
 
-Update categories in `prisma/seed.ts` with your own icons and descriptions.
+- Gradient-based color scheme
+- Glassmorphism effects with backdrop blur
+- Premium card layouts with hover animations
+- Split-screen authentication
+- Activity feed dashboard
+- Review and rating system (UI ready)
 
-## License
+## 📊 Database Schema
+
+- **Users** - Authentication and profiles
+- **Categories** - 10 prompt categories
+- **Prompts** - 1000 AI prompts with metadata
+- **PricingTiers** - Free, Starter, Pro, Complete
+- **Purchases** - User purchase history
+
+## 🛠️ Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npx prisma studio` - Open Prisma Studio
+- `npx prisma migrate dev` - Run migrations
+
+## 📄 License
 
 MIT
 
-## Support
+## 🤖 Generated with
 
-For issues and questions, please open an issue on GitHub.
+[Claude Code](https://claude.com/claude-code)
