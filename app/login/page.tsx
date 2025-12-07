@@ -1,10 +1,10 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -39,10 +39,19 @@ export default function LoginPage() {
     setError('')
 
     try {
-      await signIn(provider, {
-        callbackUrl: '/dashboard',
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
       })
-    } catch (error) {
+
+      if (error) {
+        setError(`Failed to sign in with ${provider}: ${error.message}`)
+        setOauthLoading(null)
+      }
+      // If successful, user will be redirected automatically
+    } catch (err) {
       setError(`Failed to sign in with ${provider}`)
       setOauthLoading(null)
     }
@@ -55,49 +64,42 @@ export default function LoginPage() {
 
     try {
       if (isLogin) {
-        // Login
-        const result = await signIn('credentials', {
+        // Login with Supabase
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
-          redirect: false,
         })
 
-        if (result?.error) {
+        if (error) {
           setError('Invalid email or password')
         } else {
           router.push('/dashboard')
           router.refresh()
         }
       } else {
-        // Register
+        // Register with Supabase
         if (!formData.acceptTerms) {
           setError('Please accept the terms and conditions')
           setLoading(false)
           return
         }
 
-        const response = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+            },
           },
-          body: JSON.stringify(formData),
         })
 
-        const data = await response.json()
-
-        if (!response.ok) {
-          setError(data.error || 'Something went wrong')
+        if (error) {
+          setError(error.message || 'Something went wrong')
         } else {
-          // Auto login after registration
-          const result = await signIn('credentials', {
-            email: formData.email,
-            password: formData.password,
-            redirect: false,
-          })
-
-          if (result?.error) {
-            setError('Registration successful! Please login.')
+          // Check if email confirmation is required
+          if (data.user && !data.session) {
+            setError('Please check your email to confirm your account')
           } else {
             router.push('/dashboard')
             router.refresh()

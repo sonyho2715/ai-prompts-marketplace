@@ -1,6 +1,16 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import Image from 'next/image'
+import {
+  StickyConversionBar,
+  ROICalculator,
+  PlanComparison,
+  PromptPreviewDemo,
+  RealtimeActivity,
+  TrustBadges,
+  ExitIntentPopup,
+  MobileBottomSheet
+} from '@/components/conversion'
 
 export const dynamic = 'force-dynamic'
 
@@ -178,6 +188,11 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Interactive Prompt Preview Demo */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950/20">
+        <PromptPreviewDemo />
+      </section>
+
       {/* Social Proof / Logos */}
       <section className="border-y border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -193,6 +208,34 @@ export default async function Home() {
             <div className="text-2xl font-bold text-slate-700 dark:text-slate-300">Stable Diffusion</div>
           </div>
         </div>
+      </section>
+
+      {/* Trust & Activity Section */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
+            Join thousands of professionals already using AI Prompts Pro
+          </h2>
+          <p className="text-lg text-slate-600 dark:text-slate-400">
+            See what's happening right now
+          </p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-8 items-start mb-12">
+          <div className="md:col-span-2">
+            <RealtimeActivity />
+          </div>
+          <div className="space-y-6">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-2xl border border-green-200 dark:border-green-800 p-6 text-center">
+              <div className="text-4xl font-black text-green-600 mb-2">$25,680</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Saved by users this week</div>
+            </div>
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-2xl border border-blue-200 dark:border-blue-800 p-6 text-center">
+              <div className="text-4xl font-black text-blue-600 mb-2">15.2hrs</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Average time saved/week</div>
+            </div>
+          </div>
+        </div>
+        <TrustBadges />
       </section>
 
       {/* Problem/Solution Section */}
@@ -475,6 +518,11 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* ROI Calculator */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
+        <ROICalculator />
+      </section>
+
       {/* How It Works */}
       <section className="bg-slate-50 dark:bg-slate-900/50 py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -708,6 +756,11 @@ export default async function Home() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Plan Comparison Table */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
+        <PlanComparison />
       </section>
 
       {/* FAQ Section */}
@@ -976,6 +1029,11 @@ export default async function Home() {
           </div>
         </div>
       </footer>
+
+      {/* Global Conversion Components */}
+      <StickyConversionBar />
+      <MobileBottomSheet />
+      <ExitIntentPopup />
     </div>
   )
 }
