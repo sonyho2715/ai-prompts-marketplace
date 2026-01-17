@@ -56,3 +56,4 @@ prisma/dev.db-journal
 .claude/statsig/
 .claude/projects/
 .claude/ide/
+.env.vercel
