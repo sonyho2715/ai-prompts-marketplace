@@ -15,25 +15,40 @@ import {
 export const dynamic = 'force-dynamic'
 
 export default async function Home() {
-  const pricingTiers = await prisma.pricingTier.findMany({
-    orderBy: { order: 'asc' },
-  })
+  let pricingTiers: Awaited<ReturnType<typeof prisma.pricingTier.findMany>> = []
+  let categories: Awaited<ReturnType<typeof prisma.category.findMany>> = []
+  let popularPrompts: Awaited<ReturnType<typeof prisma.prompt.findMany>> = []
+  let stats = { totalPrompts: 0, categories: 0 }
 
-  const categories = await prisma.category.findMany({
-    orderBy: { order: 'asc' },
-    take: 6,
-  })
+  try {
+    pricingTiers = await prisma.pricingTier.findMany({
+      orderBy: { order: 'asc' },
+    })
 
-  const popularPrompts = await prisma.prompt.findMany({
-    where: { isPopular: true },
-    include: { category: true },
-    orderBy: { views: 'desc' },
-    take: 3,
-  })
+    categories = await prisma.category.findMany({
+      orderBy: { order: 'asc' },
+      take: 6,
+    })
 
-  const stats = {
-    totalPrompts: await prisma.prompt.count(),
-    categories: await prisma.category.count(),
+    popularPrompts = await prisma.prompt.findMany({
+      where: { isPopular: true },
+      include: { category: true },
+      orderBy: { views: 'desc' },
+      take: 3,
+    })
+
+    stats = {
+      totalPrompts: await prisma.prompt.count(),
+      categories: await prisma.category.count(),
+    }
+  } catch (error) {
+    console.error('Database query error:', error)
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('Error name:', error.name)
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
+    }
   }
 
   return (
