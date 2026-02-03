@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { cookies } from 'next/headers'
 import { CopyButton } from '@/components/CopyButton'
 import { Header } from '@/components/Header'
 import { PromptCard } from '@/components/PromptCard'
@@ -12,6 +13,36 @@ interface PromptDetailPageProps {
   params: Promise<{
     id: string
   }>
+}
+
+// Track view with deduplication using cookies
+async function trackView(promptId: string): Promise<void> {
+  try {
+    const cookieStore = await cookies()
+    const viewedKey = `viewed_${promptId}`
+    const hasViewed = cookieStore.get(viewedKey)
+
+    // Only increment if user hasn't viewed this prompt in this session
+    if (!hasViewed) {
+      // Fire-and-forget: don't await to avoid blocking page render
+      prisma.prompt.update({
+        where: { id: promptId },
+        data: { views: { increment: 1 } },
+      }).catch((err) => {
+        // Log but don't fail the page
+        console.error('Failed to increment view count:', err)
+      })
+
+      // Set cookie to prevent duplicate counts (expires in 1 hour)
+      cookieStore.set(viewedKey, '1', {
+        maxAge: 60 * 60, // 1 hour
+        httpOnly: true,
+        sameSite: 'lax',
+      })
+    }
+  } catch {
+    // Silently fail - view tracking should never break the page
+  }
 }
 
 export default async function PromptDetailPage({ params }: PromptDetailPageProps) {
@@ -29,11 +60,8 @@ export default async function PromptDetailPage({ params }: PromptDetailPageProps
     notFound()
   }
 
-  // Increment view count
-  await prisma.prompt.update({
-    where: { id },
-    data: { views: { increment: 1 } },
-  })
+  // Track view with deduplication (non-blocking)
+  trackView(id)
 
   // Check if user has access to this prompt
   const hasAccess = prompt.isFree || (session?.user && await checkUserAccess(session.user.id, prompt.tier))

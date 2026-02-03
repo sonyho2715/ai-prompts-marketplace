@@ -12,10 +12,18 @@ const getStripe = () => {
   })
 }
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || ''
-
 export async function POST(request: Request) {
   try {
+    // Validate webhook secret is configured
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+    if (!webhookSecret) {
+      console.error('STRIPE_WEBHOOK_SECRET is not configured')
+      return NextResponse.json(
+        { error: 'Webhook not configured' },
+        { status: 500 }
+      )
+    }
+
     const body = await request.text()
     const headersList = await headers()
     const signature = headersList.get('stripe-signature')

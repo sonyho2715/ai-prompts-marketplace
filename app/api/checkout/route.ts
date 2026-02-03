@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Stripe from 'stripe'
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
 
 const getStripe = () => {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -12,6 +13,12 @@ const getStripe = () => {
     apiVersion: '2025-10-29.clover',
   })
 }
+
+// Zod schema for checkout request validation
+const checkoutSchema = z.object({
+  tierSlug: z.string().min(1, 'Tier slug is required'),
+  tierId: z.string().min(1, 'Tier ID is required'),
+})
 
 export async function POST(request: Request) {
   try {
@@ -24,16 +31,21 @@ export async function POST(request: Request) {
       )
     }
 
-    const { tierSlug, tierId, amount } = await request.json()
+    // Parse and validate request body with Zod
+    const body = await request.json()
+    const validationResult = checkoutSchema.safeParse(body)
 
-    if (!tierSlug || !tierId || amount === undefined) {
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Invalid request', details: validationResult.error.flatten().fieldErrors },
         { status: 400 }
       )
     }
 
-    // Verify pricing tier exists
+    const { tierSlug, tierId } = validationResult.data
+
+    // Verify pricing tier exists and get the ACTUAL price from database
+    // SECURITY: Never trust price from client - always fetch from database
     const pricingTier = await prisma.pricingTier.findUnique({
       where: { id: tierId },
     })
@@ -45,6 +57,36 @@ export async function POST(request: Request) {
       )
     }
 
+    // Verify the slug matches (extra security check)
+    if (pricingTier.slug !== tierSlug) {
+      return NextResponse.json(
+        { error: 'Tier mismatch' },
+        { status: 400 }
+      )
+    }
+
+    // Use the price from database, not from client request
+    const amount = pricingTier.price
+
+    // Skip Stripe for free tiers
+    if (amount === 0) {
+      // Create completed purchase directly for free tier
+      await prisma.purchase.create({
+        data: {
+          userId: session.user.id,
+          pricingTierId: tierId,
+          amount: 0,
+          status: 'completed',
+        },
+      })
+
+      return NextResponse.json({
+        success: true,
+        free: true,
+        redirectUrl: '/checkout/success?free=true'
+      })
+    }
+
     // Check if Stripe is configured
     if (!process.env.STRIPE_SECRET_KEY || !process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
       return NextResponse.json(
@@ -53,7 +95,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create Stripe checkout session
+    // Create Stripe checkout session with price from database
     const stripe = getStripe()
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -65,7 +107,7 @@ export async function POST(request: Request) {
               name: pricingTier.name,
               description: pricingTier.description,
             },
-            unit_amount: Math.round(amount * 100), // Convert to cents
+            unit_amount: Math.round(amount * 100), // Convert to cents - using DB price
           },
           quantity: 1,
         },
@@ -81,12 +123,12 @@ export async function POST(request: Request) {
       },
     })
 
-    // Create pending purchase record
+    // Create pending purchase record with database price
     await prisma.purchase.create({
       data: {
         userId: session.user.id,
         pricingTierId: tierId,
-        amount: amount,
+        amount: amount, // Using verified price from database
         status: 'pending',
         stripeSessionId: checkoutSession.id,
       },
@@ -96,10 +138,11 @@ export async function POST(request: Request) {
       sessionId: checkoutSession.id,
       url: checkoutSession.url
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Checkout error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to create checkout session'
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session' },
+      { error: errorMessage },
       { status: 500 }
     )
   }
