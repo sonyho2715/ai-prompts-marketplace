@@ -1,5 +1,9 @@
-import "dotenv/config";
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
+
+// Only load dotenv in development
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv/config");
+}
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -8,6 +12,7 @@ export default defineConfig({
   },
   engine: "classic",
   datasource: {
-    url: env("DATABASE_URL"),
+    // Use process.env directly to read from Vercel's environment
+    url: process.env.DATABASE_URL!,
   },
 });
