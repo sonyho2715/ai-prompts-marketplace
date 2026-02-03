@@ -18,12 +18,22 @@ model User {
   emailVerified DateTime?
   password      String?
   image         String?
+  industry      String?   // User's industry for personalization
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  purchases     Purchase[]
+  // Subscription status
+  subscriptionStatus  String?   // 'active', 'canceled', 'past_due'
+  subscriptionTier    String?   // 'monthly', 'annual', 'lifetime'
+  subscriptionEndDate DateTime?
+  stripeCustomerId    String?   @unique
+
+  accounts            Account[]
+  sessions            Session[]
+  purchases           Purchase[]
+  optimizerUsage      OptimizerUsage[]
+  submittedPrompts    SubmittedPrompt[]
+  savedChains         SavedChain[]
 }
 
 model Account {
@@ -99,39 +109,188 @@ model Prompt {
   @@index([tier])
 }
 
-// Pricing tiers
+// Pricing tiers - supports both one-time and subscription
 model PricingTier {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  slug        String   @unique
-  description String
-  price       Float
-  stripePriceId String?
-  promptCount Int
-  features    String[] @default([])
-  isPopular   Boolean  @default(false)
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String   @unique
+  slug            String   @unique
+  description     String
+  price           Float
+  stripePriceId   String?
+  stripeProductId String?
+  promptCount     Int
+  features        String[] @default([])
+  isPopular       Boolean  @default(false)
+  order           Int      @default(0)
+  billingType     String   @default("one_time") // 'one_time', 'monthly', 'annual'
+  aiOptimizer     Boolean  @default(false)      // Access to AI prompt optimizer
+  optimizerLimit  Int      @default(0)          // Monthly optimizer uses (0 = unlimited)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  purchases   Purchase[]
+  purchases       Purchase[]
 }
 
 // Purchase/Order model
 model Purchase {
-  id              String   @id @default(cuid())
-  userId          String
-  pricingTierId   String
-  stripeSessionId String?  @unique
-  stripePaymentId String?
-  amount          Float
-  status          String   @default("pending") // pending, completed, failed
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  userId              String
+  pricingTierId       String
+  stripeSessionId     String?  @unique
+  stripePaymentId     String?
+  stripeSubscriptionId String?
+  amount              Float
+  status              String   @default("pending") // pending, completed, failed, canceled
+  billingType         String   @default("one_time") // one_time, monthly, annual
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
-  user            User         @relation(fields: [userId], references: [id])
-  pricingTier     PricingTier  @relation(fields: [pricingTierId], references: [id])
+  user                User         @relation(fields: [userId], references: [id])
+  pricingTier         PricingTier  @relation(fields: [pricingTierId], references: [id])
 
   @@index([userId])
   @@index([status])
+}
+
+// AI Prompt Optimizer usage tracking
+model OptimizerUsage {
+  id          String   @id @default(cuid())
+  userId      String
+  inputPrompt String   @db.Text
+  outputPrompt String  @db.Text
+  targetAI    String   // ChatGPT, Claude, Midjourney, etc.
+  industry    String?
+  tokensUsed  Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Prompt Chains - multi-step workflows
+model PromptChain {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String   // business, marketing, content, etc.
+  industry    String?  // optional industry focus
+  difficulty  String   @default("intermediate")
+  steps       ChainStep[]
+  isFree      Boolean  @default(false)
+  isPopular   Boolean  @default(false)
+  tier        String   @default("pro")
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  savedBy     SavedChain[]
+
+  @@index([category])
+  @@index([tier])
+}
+
+// Steps within a prompt chain
+model ChainStep {
+  id          String   @id @default(cuid())
+  chainId     String
+  order       Int
+  title       String
+  description String?
+  prompt      String   @db.Text
+  expectedOutput String?
+  variables   String[] @default([]) // Variables user needs to fill
+  createdAt   DateTime @default(now())
+
+  chain       PromptChain @relation(fields: [chainId], references: [id], onDelete: Cascade)
+
+  @@index([chainId])
+}
+
+// User's saved chains for quick access
+model SavedChain {
+  id        String   @id @default(cuid())
+  userId    String
+  chainId   String
+  customVariables Json?    // User's saved variable values
+  createdAt DateTime @default(now())
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chain     PromptChain @relation(fields: [chainId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chainId])
+}
+
+// User-submitted prompts (community feature)
+model SubmittedPrompt {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String
+  content     String   @db.Text
+  category    String
+  tags        String[] @default([])
+  aiModel     String[] @default([])
+  status      String   @default("pending") // pending, approved, rejected
+  reviewNote  String?
+  votes       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+// Newsletter subscribers
+model Newsletter {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  industry    String?
+  source      String?  // where they signed up: homepage, blog, exit-intent
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// Blog posts for SEO
+model BlogPost {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String
+  content     String   @db.Text
+  coverImage  String?
+  category    String   // seo-prompts, marketing-prompts, business-prompts, etc.
+  tags        String[] @default([])
+  author      String   @default("AI Prompts Team")
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isPublished])
+  @@index([category])
+}
+
+// Predefined industries for customization
+model Industry {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  promptModifiers Json?   // Industry-specific prompt modifications
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([isActive])
 }
